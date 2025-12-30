@@ -2,7 +2,10 @@ from confluent_kafka import Producer
 import json
 import time
 import random
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
+
+# KST 타임존 정의 (UTC+9)
+KST = timezone(timedelta(hours=9))
 
 # Kafka Producer 설정
 conf = {
@@ -31,15 +34,13 @@ def delivery_report(err, msg):
     """메시지 전송 결과 콜백"""
     if err is not None:
         print(f'❌ 전송 실패: {err}')
-    # else:
-    #     print(f'✅ 전송 성공: {msg.topic()} [{msg.partition()}]')
 
 def generate_normal_order():
     """정상 주문 생성"""
     product = random.choice(products)
     return {
         "order_id": f"ORD{int(time.time() * 1000)}",
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": datetime.now(KST).isoformat(),  # KST 타임존 포함
         "user_id": f"USER{random.randint(1000, 9999)}",
         "product_id": product["id"],
         "product_name": product["name"],
@@ -54,7 +55,7 @@ def generate_suspicious_order():
     product = random.choice(products)
     return {
         "order_id": f"ORD{int(time.time() * 1000)}",
-        "timestamp": datetime.now().isoformat(),
+        "timestamp": datetime.now(KST).isoformat(),  # KST 타임존 포함
         "user_id": "USERBOT",
         "product_id": product["id"],
         "product_name": product["name"],
@@ -93,7 +94,7 @@ try:
         total_price = order['price'] * order['quantity']
         print(f"{emoji} 주문 #{order_count}: {order['product_name']} "
               f"x{order['quantity']} = {total_price:,}원 "
-              f"(IP: {order['ip_address']})")
+              f"(IP: {order['ip_address'][-10:]})")
         
         order_count += 1
         
